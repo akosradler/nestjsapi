@@ -2,18 +2,23 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import CreatePostDto from './dto/createPost.dto';
 import UpdatePostDto from './dto/updatePost.dto';
 import Post from './post.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export default class PostsService {
   private lastPostId = 0;
-  private posts: Post[] = [];
+
+  constructor(
+    @InjectRepository(Post) private postsRepository: Repository<Post>,
+  ) {}
 
   getAllPosts() {
-    return this.posts;
+    return this.postsRepository.find();
   }
 
   getPostById(id: number) {
-    const post = this.posts.find((post) => post.id === id);
+    const post = this.postsRepository.findOne(id);
 
     if (post) {
       return post;
@@ -22,32 +27,30 @@ export default class PostsService {
     throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
   }
 
-  createPost(post: CreatePostDto) {
+  async createPost(post: CreatePostDto) {
     const newPost = {
       id: ++this.lastPostId,
       ...post,
     };
 
-    this.posts.push(newPost);
+    await this.postsRepository.save(newPost);
     return newPost;
   }
 
-  updatePost(id: number, post: UpdatePostDto) {
-    const postIndex = this.posts.findIndex((post) => post.id === id);
+  async updatePost(id: number, post: UpdatePostDto) {
+    await this.postsRepository.update(id, post);
+    const postToUpdate = await this.postsRepository.findOne(id);
 
-    if (postIndex > -1) {
-      this.posts[postIndex] = post;
+    if (postToUpdate) {
       return post;
     }
 
     throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
   }
 
-  deletePost(id: number) {
-    const postIndex = this.posts.findIndex((post) => post.id === id);
-    if (postIndex > -1) {
-      this.posts.splice(postIndex, 1);
-    } else {
+  async deletePost(id: number) {
+    const deleteReponse = await this.postsRepository.delete(id);
+    if (!deleteReponse.affected) {
       throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
     }
   }
