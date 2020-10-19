@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import * as Joi from '@hapi/joi';
 import { AuthenticationModule } from './authentication/authentication.module';
+import { CategoriesService } from './categories/categories.service';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -24,8 +26,9 @@ import { AuthenticationModule } from './authentication/authentication.module';
     DatabaseModule,
     AuthenticationModule,
     UsersModule,
+    CategoriesModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [CategoriesService],
 })
 export class AppModule {}
